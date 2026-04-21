@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import warnings
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -768,8 +770,16 @@ def _extract_eeg_features_from_file(file_path: Path) -> dict[str, float]:
 def train_eeg_bundle(root_dir: str | Path = EEG_DIR, max_files: int = 40) -> dict[str, Any]:
     root_dir = Path(root_dir)
 
+    # Allow either an extracted directory or a .zip upload path.
+    # If a zip is provided, extract it to a temporary folder and recurse from there.
+    if root_dir.is_file() and root_dir.suffix.lower() == ".zip":
+        temp_dir = Path(tempfile.mkdtemp(prefix="memoria_eeg_"))
+        with zipfile.ZipFile(root_dir, "r") as zip_ref:
+            zip_ref.extractall(temp_dir)
+        root_dir = temp_dir
+
     participants = None
-    for candidate in [root_dir / "participants.tsv", root_dir / "participants.csv"]:
+    for candidate in list(root_dir.rglob("participants.tsv")) + list(root_dir.rglob("participants.csv")):
         if candidate.exists():
             participants = pd.read_csv(candidate, sep="\t" if candidate.suffix == ".tsv" else ",")
             break
