@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import random
 import time
+import zipfile
 from datetime import datetime
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -288,6 +289,60 @@ def ui(key: str) -> str:
     if translated == key and fallback:
         return fallback
     return translated
+
+
+def _dataset_upload_root() -> Path:
+    root = EXPORT_DIR / "uploaded_datasets"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _create_upload_dir(name: str) -> Path:
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    out_dir = _dataset_upload_root() / f"{name}_{stamp}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    return out_dir
+
+
+def _save_uploaded_files(uploaded_files: list, dest_dir: Path) -> int:
+    saved = 0
+    for uploaded in uploaded_files or []:
+        parts = [p for p in Path(uploaded.name).parts if p not in (".", "..")]
+        safe_parts = [p.replace('\\', '_').replace('/', '_') for p in parts]
+        target = dest_dir.joinpath(*safe_parts) if safe_parts else dest_dir / uploaded.name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(uploaded.getbuffer())
+        saved += 1
+    return saved
+
+
+def _extract_uploaded_zip(uploaded_zip, dest_dir: Path) -> int:
+    if uploaded_zip is None:
+        return 0
+    archive_path = dest_dir / uploaded_zip.name
+    archive_path.write_bytes(uploaded_zip.getbuffer())
+    extracted = 0
+    with zipfile.ZipFile(archive_path, 'r') as zf:
+        for member in zf.infolist():
+            if member.is_dir():
+                continue
+            extracted += 1
+        zf.extractall(dest_dir)
+    return extracted
+
+
+def _prepare_uploaded_dataset_dir(name: str, uploaded_files: list | None = None, uploaded_zip=None) -> tuple[Path | None, int]:
+    has_files = bool(uploaded_files)
+    has_zip = uploaded_zip is not None
+    if not has_files and not has_zip:
+        return None, 0
+    dest_dir = _create_upload_dir(name)
+    count = 0
+    if has_zip:
+        count += _extract_uploaded_zip(uploaded_zip, dest_dir)
+    if has_files:
+        count += _save_uploaded_files(uploaded_files, dest_dir)
+    return dest_dir, count
 
 
 def inject_memoria_theme() -> None:
@@ -1549,12 +1604,34 @@ def render_doctor_page(user: dict) -> None:
 
         with hub_tabs[1]:
             st.markdown("### Behavioural multi-sheet training")
-            st.write(f"Expected folder: `{ADDRESSO_DIR}`")
-            st.caption("Uses Activity.csv, Demographics.csv, Labels.csv, Physiology.csv, and Sleep.csv if present.")
+            st.write(f"Default folder: `{ADDRESSO_DIR}`")
+            st.caption("Upload the behavioural sheets directly, or upload one zip containing Activity.csv, Demographics.csv, Labels.csv, Physiology.csv, and Sleep.csv.")
+
+            addresso_zip = st.file_uploader(
+                "Upload behavioural dataset zip",
+                type=["zip"],
+                key="doctor_addresso_zip",
+            )
+            addresso_files = st.file_uploader(
+                "Or upload behavioural CSV files",
+                type=["csv"],
+                accept_multiple_files=True,
+                key="doctor_addresso_files",
+            )
+
+            addresso_upload_dir, addresso_count = _prepare_uploaded_dataset_dir(
+                "behavioural_bundle",
+                uploaded_files=addresso_files,
+                uploaded_zip=addresso_zip,
+            )
+            if addresso_upload_dir is not None:
+                st.caption(f"Prepared uploaded behavioural dataset: `{addresso_upload_dir}` ({addresso_count} file(s))")
+
             if st.button("Train behavioural-sheet bundle", use_container_width=True, key="train_addresso_btn"):
                 with st.spinner("Training behavioural-sheet model..."):
                     try:
-                        metadata = train_addresso_bundle(ADDRESSO_DIR)
+                        root_dir = addresso_upload_dir if addresso_upload_dir is not None else ADDRESSO_DIR
+                        metadata = train_addresso_bundle(root_dir)
                         st.success("Behavioural-sheet model completed.")
                         render_metadata_block("Behavioural-Sheet Results", metadata)
                     except Exception as exc:
@@ -1564,13 +1641,34 @@ def render_doctor_page(user: dict) -> None:
 
         with hub_tabs[2]:
             st.markdown("### EEG model training")
-            st.write(f"Expected folder: `{EEG_DIR}`")
-            st.caption("Attempts signal-feature extraction if EEG files are readable; otherwise falls back to exploratory analysis.")
+            st.write(f"Default folder: `{EEG_DIR}`")
+            st.caption("Upload EEG files directly, or upload one zip containing EEG files and optional participants.tsv / participants.csv metadata.")
+
+            eeg_zip = st.file_uploader(
+                "Upload EEG dataset zip",
+                type=["zip"],
+                key="doctor_eeg_zip",
+            )
+            eeg_files = st.file_uploader(
+                "Or upload EEG files",
+                type=["edf", "bdf", "fif", "set", "tsv", "csv"],
+                accept_multiple_files=True,
+                key="doctor_eeg_files",
+            )
+            eeg_upload_dir, eeg_count = _prepare_uploaded_dataset_dir(
+                "eeg_bundle",
+                uploaded_files=eeg_files,
+                uploaded_zip=eeg_zip,
+            )
+            if eeg_upload_dir is not None:
+                st.caption(f"Prepared uploaded EEG dataset: `{eeg_upload_dir}` ({eeg_count} file(s))")
+
             max_files = st.slider("Max EEG files to scan", 10, 100, 40, key="eeg_max_files")
             if st.button("Train EEG model", use_container_width=True, key="train_eeg_btn"):
                 with st.spinner("Training EEG model..."):
                     try:
-                        metadata = train_eeg_bundle(EEG_DIR, max_files=max_files)
+                        root_dir = eeg_upload_dir if eeg_upload_dir is not None else EEG_DIR
+                        metadata = train_eeg_bundle(root_dir, max_files=max_files)
                         st.success("EEG model completed.")
                         render_metadata_block("EEG Results", metadata)
                     except Exception as exc:
@@ -1580,13 +1678,34 @@ def render_doctor_page(user: dict) -> None:
 
         with hub_tabs[3]:
             st.markdown("### Imaging model training")
-            st.write(f"Expected folder: `{IMAGING_DIR}`")
-            st.caption("Uses handcrafted image features from MildDemented, VeryMildDemented, ModerateDemented, and NonDemented folders.")
+            st.write(f"Default folder: `{IMAGING_DIR}`")
+            st.caption("Upload one zip containing class folders such as MildDemented, VeryMildDemented, ModerateDemented, and NonDemented. Multiple image uploads are also accepted if their folder paths are preserved.")
+
+            imaging_zip = st.file_uploader(
+                "Upload imaging dataset zip",
+                type=["zip"],
+                key="doctor_imaging_zip",
+            )
+            imaging_files = st.file_uploader(
+                "Or upload imaging files",
+                type=["png", "jpg", "jpeg", "bmp"],
+                accept_multiple_files=True,
+                key="doctor_imaging_files",
+            )
+            imaging_upload_dir, imaging_count = _prepare_uploaded_dataset_dir(
+                "imaging_bundle",
+                uploaded_files=imaging_files,
+                uploaded_zip=imaging_zip,
+            )
+            if imaging_upload_dir is not None:
+                st.caption(f"Prepared uploaded imaging dataset: `{imaging_upload_dir}` ({imaging_count} file(s))")
+
             max_per_class = st.slider("Max images per class", 50, 500, 250, 25, key="img_max_per_class")
             if st.button("Train imaging model", use_container_width=True, key="train_img_btn"):
                 with st.spinner("Training imaging model..."):
                     try:
-                        metadata = train_imaging_bundle(IMAGING_DIR, max_per_class=max_per_class)
+                        root_dir = imaging_upload_dir if imaging_upload_dir is not None else IMAGING_DIR
+                        metadata = train_imaging_bundle(root_dir, max_per_class=max_per_class)
                         st.success("Imaging model completed.")
                         render_metadata_block("Imaging Results", metadata)
                     except Exception as exc:
