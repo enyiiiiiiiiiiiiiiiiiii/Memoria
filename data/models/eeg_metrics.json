@@ -1,0 +1,26 @@
+{
+  "modality": "eeg_metadata",
+  "feature_columns": [
+    "Age",
+    "MMSE"
+  ],
+  "row_count": 88,
+  "training_mode": "unsupervised_exploration",
+  "n_clusters": 3,
+  "cluster_counts": {
+    "0": 29,
+    "1": 32,
+    "2": 27
+  },
+  "anomaly_rate": 0.1591,
+  "silhouette_score": 0.443,
+  "chart_paths": {
+    "cluster_distribution": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\eeg_metadata\\eeg_metadata_cluster_distribution.png",
+    "pca_clusters": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\eeg_metadata\\eeg_metadata_pca_clusters.png",
+    "pca_anomalies": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\eeg_metadata\\eeg_metadata_anomaly_pca_clusters.png",
+    "group_distribution": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\eeg_signal\\eeg_group_distribution.png"
+  },
+  "mode": "metadata_unsupervised",
+  "eeg_files_found": 40,
+  "participants_found": 88
+}

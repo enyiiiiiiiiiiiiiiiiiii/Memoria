@@ -1,0 +1,138 @@
+{
+  "modality": "imaging_binary",
+  "feature_columns": [
+    "mean_intensity",
+    "std_intensity",
+    "min_intensity",
+    "max_intensity",
+    "edge_proxy",
+    "hist_0",
+    "hist_1",
+    "hist_2",
+    "hist_3",
+    "hist_4",
+    "hist_5",
+    "hist_6",
+    "hist_7",
+    "hist_8",
+    "hist_9",
+    "hist_10",
+    "hist_11",
+    "hist_12",
+    "hist_13",
+    "hist_14",
+    "hist_15"
+  ],
+  "numeric_columns": [
+    "mean_intensity",
+    "std_intensity",
+    "min_intensity",
+    "max_intensity",
+    "edge_proxy",
+    "hist_0",
+    "hist_1",
+    "hist_2",
+    "hist_3",
+    "hist_4",
+    "hist_5",
+    "hist_6",
+    "hist_7",
+    "hist_8",
+    "hist_9",
+    "hist_10",
+    "hist_11",
+    "hist_12",
+    "hist_13",
+    "hist_14",
+    "hist_15"
+  ],
+  "categorical_columns": [],
+  "best_model": "random_forest",
+  "best_auc": 0.7866,
+  "candidates": {
+    "logistic_regression": {
+      "auc": 0.7159,
+      "accuracy": 0.6775,
+      "classification_report": {
+        "0": {
+          "precision": 0.41420118343195267,
+          "recall": 0.7,
+          "f1-score": 0.5204460966542751,
+          "support": 100.0
+        },
+        "1": {
+          "precision": 0.8701298701298701,
+          "recall": 0.67,
+          "f1-score": 0.7570621468926554,
+          "support": 300.0
+        },
+        "accuracy": 0.6775,
+        "macro avg": {
+          "precision": 0.6421655267809114,
+          "recall": 0.685,
+          "f1-score": 0.6387541217734652,
+          "support": 400.0
+        },
+        "weighted avg": {
+          "precision": 0.7561476984553908,
+          "recall": 0.6775,
+          "f1-score": 0.6979081343330603,
+          "support": 400.0
+        }
+      }
+    },
+    "random_forest": {
+      "auc": 0.7866,
+      "accuracy": 0.795,
+      "classification_report": {
+        "0": {
+          "precision": 0.6363636363636364,
+          "recall": 0.42,
+          "f1-score": 0.5060240963855421,
+          "support": 100.0
+        },
+        "1": {
+          "precision": 0.8263473053892215,
+          "recall": 0.92,
+          "f1-score": 0.8706624605678234,
+          "support": 300.0
+        },
+        "accuracy": 0.795,
+        "macro avg": {
+          "precision": 0.7313554708764289,
+          "recall": 0.67,
+          "f1-score": 0.6883432784766828,
+          "support": 400.0
+        },
+        "weighted avg": {
+          "precision": 0.7788513881328253,
+          "recall": 0.795,
+          "f1-score": 0.779502869522253,
+          "support": 400.0
+        }
+      }
+    }
+  },
+  "row_count": 2000,
+  "chart_paths": {
+    "class_distribution": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\imaging_binary\\imaging_binary_class_distribution.png",
+    "model_comparison": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\imaging_binary\\imaging_binary_model_comparison.png",
+    "confusion_matrix": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\imaging_binary\\imaging_binary_confusion_matrix.png",
+    "roc_curve": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\imaging_binary\\imaging_binary_roc_curve.png",
+    "feature_importance": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\imaging_binary\\imaging_binary_feature_importance.png",
+    "class_counts": "C:\\Users\\Fan Enyi\\Desktop\\yes_naisc\\data\\exports\\artifacts\\charts\\imaging_binary\\imaging_class_counts.png"
+  },
+  "training_mode": "supervised",
+  "class_counts": {
+    "MildDemented": 500,
+    "ModerateDemented": 500,
+    "NonDemented": 500,
+    "VeryMildDemented": 500
+  },
+  "binary_mapping": {
+    "NonDemented": 0,
+    "MildDemented": 1,
+    "VeryMildDemented": 1,
+    "ModerateDemented": 1
+  }
+}
